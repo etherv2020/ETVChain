@@ -1,0 +1,16 @@
+# Build Gech in a stock Go builder container
+FROM golang:1.11-alpine as builder
+
+RUN apk add --no-cache make gcc musl-dev linux-headers
+
+ADD . /go-etvchaineum
+RUN cd /go-etvchaineum && make gech
+
+# Pull Gech into a second stage deploy alpine container
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /go-etvchaineum/build/bin/gech /usr/local/bin/
+
+EXPOSE 8545 8546 30303 30303/udp
+ENTRYPOINT ["gech"]
